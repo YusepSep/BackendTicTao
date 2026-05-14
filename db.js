@@ -1,15 +1,16 @@
 const mysql = require('mysql2/promise');
 
-const requiredEnv = ['DB_HOST', 'DB_USER', 'DB_NAME', 'DB_PORT'];
-for (const key of requiredEnv) {
-  if (!process.env[key]) {
-    // Keep running for non-DB gameplay; log a clear warning.
-    console.warn(`[DB] Missing env ${key}. Auth/online/chat features may not work.`);
-  }
-}
+// DEBUG: Cetak variabel yang dibaca (Password akan disensor)
+console.log("=== DATABASE DEBUG INFO ===");
+console.log("DB_HOST:", process.env.MYSQLHOST || process.env.DB_HOST || "NOT SET (will use localhost)");
+console.log("DB_USER:", process.env.MYSQLUSER || process.env.DB_USER);
+console.log("DB_NAME:", process.env.MYSQLDATABASE || process.env.DB_NAME);
+console.log("DB_PORT:", process.env.MYSQLPORT || process.env.DB_PORT);
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("============================");
 
 const pool = mysql.createPool({
-  host: process.env.MYSQLHOST || process.env.DB_HOST,
+  host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
   user: process.env.MYSQLUSER || process.env.DB_USER,
   password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
   database: process.env.MYSQLDATABASE || process.env.DB_NAME,
@@ -17,7 +18,8 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: Number(process.env.DB_POOL_LIMIT || 10),
   queueLimit: 0,
-  ssl: process.env.MYSQLHOST ? { rejectUnauthorized: false } : false
+  ssl: (process.env.MYSQLHOST || process.env.DB_HOST) && process.env.NODE_ENV === 'production' 
+       ? { rejectUnauthorized: false } : false
 });
 
 async function dbQuery(sql, params = []) {
